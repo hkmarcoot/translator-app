@@ -1,11 +1,29 @@
 import Head from "next/head";
-import Image from "next/image";
+//import Image from "next/image";
 import { Inter } from "@next/font/google";
-import styles from "@/styles/Home.module.css";
+//import styles from "@/styles/Home.module.css";
+import { useCollection } from "react-firebase-hooks/firestore";
+import { db } from "../../firebase.js";
+import firebase from "firebase/compat/app";
+import { useRef } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
+  const [messagesSnapshot, loading, error] = useCollection(
+    db.collection("messages")
+  );
+  const inputRef = useRef(null);
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+
+    db.collection("messages").add({
+      message: inputRef.current.value,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    inputRef.current.value = "";
+  };
   return (
     <>
       <Head>
@@ -20,10 +38,20 @@ export default function Home() {
       </Head>
       <main className="w-screen h-screen flex flex-col justify-center items-center">
         <h1 className="bg-red-300">Hello let's build translator app</h1>
+        {messagesSnapshot?.docs.map((doc) => {
+          <div key={doc.id}>
+            <p>{doc.data().message}</p>
+          </div>;
+        })}
         <form className="pt-4">
-          <input type="text" className="border-2 border-indigo-300" />
+          <input
+            ref={inputRef}
+            type="text"
+            className="border-2 border-indigo-300"
+          />
           <button
             type="submit"
+            onClick={onSubmit}
             className="bg-indigo-300 px-4 py-1 ml-4 rounded-full"
           >
             Send Message
